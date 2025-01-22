@@ -10,16 +10,16 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 @TeleOp
 
 public class MecanumTeleOp extends LinearOpMode {
-    
-    public DcMotor  leftDrive   = null; //the left drivetrain motor
-    public DcMotor  rightDrive  = null; //the right drivetrain motor
-    public DcMotor ViperSlideMotor = null; //the 1 Viper slide motor
-    public DcMotor  armMotor    = null; //the arm motor
-    public CRServo  intake      = null; //the active intake servo
-    public CRServo  wrist     = null; //the wrist servo
-    
-@Override
-    
+
+    public DcMotor leftDrive = null; // the left drivetrain motor
+    public DcMotor rightDrive = null; // the right drivetrain motor
+    public DcMotor ViperSlideMotor = null; // the 1 Viper slide motor
+    public DcMotor armMotor = null; // the arm motor
+    public CRServo intake = null; // the active intake servo
+    public CRServo wrist = null; // the wrist servo
+
+    @Override
+
     public void runOpMode() throws InterruptedException {
         DcMotor frontLeftMotor = hardwareMap.dcMotor.get("drive0");
         DcMotor backLeftMotor = hardwareMap.dcMotor.get("drive1");
@@ -35,8 +35,7 @@ public class MecanumTeleOp extends LinearOpMode {
         armMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         ViperSlideMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
-
-        //setting all the motors to break mode
+        // setting all the motors to break mode
         frontLeftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         frontRightMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backLeftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -44,14 +43,23 @@ public class MecanumTeleOp extends LinearOpMode {
         armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         ViperSlideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
+        armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        armMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        int armPosition;
+
         telemetry.addLine("Sigmmus Prime Rollout!");
         telemetry.update();
 
         waitForStart();
 
-        if (isStopRequested()) return;
+        if (isStopRequested())
+            return;
 
         while (opModeIsActive()) {
+
+            int armPosition = armMotor.getcurrentPosition();
+
             double y = gamepad1.left_stick_y; // Remember, Y stick value is reversed
             double x = -gamepad1.left_stick_x * 1.1; // Regulate motor speeds
             double rx = gamepad1.right_stick_x;
@@ -68,14 +76,19 @@ public class MecanumTeleOp extends LinearOpMode {
             frontRightMotor.setPower(frontRightPower);
             backRightMotor.setPower(backRightPower);
 
-
             // Control arm motor
             if (gamepad2.right_stick_y > 0.2) {
                 armMotor.setPower(-0.7);
             } else if (gamepad2.right_stick_y < -0.2) {
                 armMotor.setPower(0.7);
             } else {
-                armMotor.setPower(0.1);
+                // Adjusting passive power/passive breakmode based on the position of the arm
+                if (armPosition > SOME_THRESHOLD) { // REMEBER TO REPLACE SOME_THRESHOLD WITH YOUR VALUE WHEN YOU
+                                                    // CALCULATE IT
+                    armMotor.setPower(-0.1);
+                } else {
+                    armMotor.setPower(0.1); // the default passive power
+                }
             }
 
             // Control intake servo
@@ -98,7 +111,7 @@ public class MecanumTeleOp extends LinearOpMode {
                 ViperSlideMotor.setPower(-0.5);
             } else if (gamepad2.left_trigger > 0) {
                 ViperSlideMotor.setPower(0.5);
-            }else {
+            } else {
                 ViperSlideMotor.setPower(0.1);
             }
         }
