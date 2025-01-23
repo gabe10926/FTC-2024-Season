@@ -1,0 +1,118 @@
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+
+@TeleOp
+public class MecanumTeleOpVS extends LinearOpMode {
+
+    public DcMotor leftDrive = null; // the left drivetrain motor
+    public DcMotor rightDrive = null; // the right drivetrain motor
+    public DcMotor ViperSlideMotor = null; // the Viper slide motor
+    public DcMotor armMotor = null; // the arm motor
+    public CRServo intake = null; // the active intake servo
+    public CRServo wrist = null; // the wrist servo
+
+    private static final double ARM_DEAD_ZONE = 0.2; // Threshold to ignore small joystick movements
+    private static final double PASSIVE_POWER_UP = 0.1; // Passive power when arm is below the threshold
+    private static final double PASSIVE_POWER_DOWN = -0.1; // Passive power when arm is above the threshold
+    private static final int SOME_THRESHOLD = 500; // Replace with your calculated threshold
+
+    @Override
+    public void runOpMode() throws InterruptedException {
+        DcMotor frontLeftMotor = hardwareMap.dcMotor.get("drive0");
+        DcMotor backLeftMotor = hardwareMap.dcMotor.get("drive1");
+        DcMotor frontRightMotor = hardwareMap.dcMotor.get("drive2");
+        DcMotor backRightMotor = hardwareMap.dcMotor.get("drive3");
+        armMotor = hardwareMap.dcMotor.get("arm0");
+        ViperSlideMotor = hardwareMap.dcMotor.get("VSM0");
+        wrist = hardwareMap.get(CRServo.class, "serv0");
+        intake = hardwareMap.get(CRServo.class, "serv1");
+
+        frontRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        backRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        armMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        ViperSlideMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        // Set all motors to brake mode
+        frontLeftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        frontRightMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backLeftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backRightMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        ViperSlideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        armMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        telemetry.addLine("Sigmmus Prime Rollout!");
+        telemetry.update();
+
+        waitForStart();
+
+        if (isStopRequested())
+            return;
+
+        while (opModeIsActive()) {
+            int armPosition = armMotor.getCurrentPosition();
+
+            double y = gamepad1.left_stick_y; // Y stick value (inverted)
+            double x = -gamepad1.left_stick_x * 1.1; // Adjust sensitivity
+            double rx = gamepad1.right_stick_x;
+
+            // Calculate motor power for mecanum drive
+            double denominator = Math.max(Math.abs(y) + Math.abs(x) + Math.abs(rx), 1);
+            double frontLeftPower = (y + x + rx) / denominator;
+            double backLeftPower = (y - x + rx) / denominator;
+            double frontRightPower = (y - x - rx) / denominator;
+            double backRightPower = (y + x - rx) / denominator;
+
+            frontLeftMotor.setPower(frontLeftPower);
+            backLeftMotor.setPower(backLeftPower);
+            frontRightMotor.setPower(frontRightPower);
+            backRightMotor.setPower(backRightPower);
+
+            // Control arm motor with dead zone
+            if (Math.abs(gamepad2.right_stick_y) > ARM_DEAD_ZONE) {
+                double armPower = -gamepad2.right_stick_y * 0.7; // Scale arm power
+                armMotor.setPower(armPower);
+            } else {
+                // Adjust passive power based on the arm position
+                if (armPosition > SOME_THRESHOLD) {
+                    armMotor.setPower(PASSIVE_POWER_DOWN);
+                } else {
+                    armMotor.setPower(PASSIVE_POWER_UP);
+                }
+            }
+
+            // Control intake servo
+            if (gamepad2.y) {
+                intake.setPower(1.0);
+            } else if (gamepad2.x) {
+                intake.setPower(-1.0);
+            } else {
+                intake.setPower(0.0);
+            }
+
+            // Control wrist servo
+            if (gamepad2.a) {
+                wrist.setPower(0.5);
+            } else if (gamepad2.b) {
+                wrist.setPower(0.0);
+            }
+
+            // Control Viper slide motor
+            if (gamepad2.right_trigger > 0) {
+                ViperSlideMotor.setPower(-0.5);
+            } else if (gamepad2.left_trigger > 0) {
+                ViperSlideMotor.setPower(0.5);
+            } else {
+                ViperSlideMotor.setPower(0.1);
+            }
+        }
+    }
+}
