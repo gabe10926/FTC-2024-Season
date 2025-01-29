@@ -46,8 +46,6 @@ public class MecanumTeleOp extends LinearOpMode {
         armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         armMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        int armPosition;
-
         telemetry.addLine("Sigmmus Prime Rollout!");
         telemetry.update();
 
@@ -58,12 +56,13 @@ public class MecanumTeleOp extends LinearOpMode {
 
         while (opModeIsActive()) {
 
-            int armPosition = armMotor.getcurrentPosition();
+            int armPosition = armMotor.getCurrentPosition();
 
-            double y = gamepad1.left_stick_y; // Remember, Y stick value is reversed
-            double x = -gamepad1.left_stick_x * 1.1; // Regulate motor speeds
+            double y = -gamepad1.left_stick_y; // Remember, Y stick value is reversed
+            double x = gamepad1.left_stick_x * 1.1; // Regulate motor speeds
             double rx = gamepad1.right_stick_x;
-
+            double dy = -gamepad2.right_stick_y;
+        
             // Denominator is the largest motor power (1)
             double denominator = Math.max(Math.abs(y) + Math.abs(x) + Math.abs(rx), 1);
             double frontLeftPower = (y + x + rx) / denominator;
@@ -77,18 +76,16 @@ public class MecanumTeleOp extends LinearOpMode {
             backRightMotor.setPower(backRightPower);
 
             // Control arm motor
-            if (gamepad2.right_stick_y > 0.2) {
-                armMotor.setPower(-0.7);
-            } else if (gamepad2.right_stick_y < -0.2) {
-                armMotor.setPower(0.7);
+            if (dy > 0.2) {
+                armMotor.setPower(-0.4);
+            } else if (dy < -0.2) {
+                armMotor.setPower(0.4);
             } else {
-                // Adjusting passive power/passive breakmode based on the position of the arm
-                if (armPosition > SOME_THRESHOLD) { // REMEBER TO REPLACE SOME_THRESHOLD WITH YOUR VALUE WHEN YOU
-                                                    // CALCULATE IT
-                    armMotor.setPower(-0.1);
-                } else {
-                    armMotor.setPower(0.1); // the default passive power
-                }
+                armMotor.setPower(-0.01);
+            }
+
+            if (armPosition < -1970) {
+                armMotor.setPower(0.2);
             }
 
             // Control intake servo
@@ -100,19 +97,12 @@ public class MecanumTeleOp extends LinearOpMode {
                 intake.setPower(0.0);
             }
 
-            // Control wrist servo
-            if (gamepad2.a) {
-                wrist.setPower(0.5);
-            } else if (gamepad2.b) {
-                wrist.setPower(0.0);
-            }
-
             if (gamepad2.right_trigger > 0) {
-                ViperSlideMotor.setPower(-0.5);
+                ViperSlideMotor.setPower(-0.6);
             } else if (gamepad2.left_trigger > 0) {
-                ViperSlideMotor.setPower(0.5);
+                ViperSlideMotor.setPower(0.6);
             } else {
-                ViperSlideMotor.setPower(0.1);
+                ViperSlideMotor.setPower(0.03);
             }
         }
     }
