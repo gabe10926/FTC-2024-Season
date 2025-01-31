@@ -89,14 +89,14 @@ public class MecAuto extends LinearOpMode {
         leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
         leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
         rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
-        rightBackDrive.setDirection(DcMotor.Direction.FOrWARD);
+        rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
 
      if (USE_WEBCAM)
             setManualExposure(exposureMS:6, gain:250); //Use low exposure time to reduce motion blur
 
 
             //wait for driver to press start
-            telemetry.addData("Camera Preview on/off", "3 dots, Cemera stream");
+            telemetry.addData("Camera Preview on/off", "3 dots, Camera stream");
             telemetry.addData(">", "Touch Play to start OpMode");
             telemetry.update();
             waitForStart();
